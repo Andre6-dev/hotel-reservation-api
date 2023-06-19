@@ -23,7 +23,7 @@ var config = fiber.Config{
 }
 
 func main() {
-	listenAddress := flag.String("ListenAddress", ":3000", "Address to listen on")
+	listenAddress := flag.String("ListenAddress", ":5000", "Address to listen on")
 	flag.Parse()
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dburi))
@@ -37,6 +37,8 @@ func main() {
 	app := fiber.New(config)
 	apiv1 := app.Group("/api/v1")
 
+	// Define routes
+	apiv1.Post("/user", userHandler.HandlePostUser)
 	apiv1.Get("/user", userHandler.HandlerListUsers)
 	apiv1.Get("/user/:id", userHandler.HandlerGetUser)
 	// Start server on port 3000

@@ -12,8 +12,9 @@ import (
 const UserCollection = "users"
 
 type UserStore interface {
-	// Get User by ID
 	GetUserById(context.Context, string) (*models.User, error)
+	GetUsers(context.Context) ([]*models.User, error)
+	InsertUser(context.Context, *models.User) (*models.User, error)
 }
 
 // MongoUserStore implements UserStore
@@ -22,13 +23,39 @@ type MongoUserStore struct {
 	collection *mongo.Collection
 }
 
-// Constructor for MongoUserStore
+func (s *MongoUserStore) InsertUser(ctx context.Context, user *models.User) (*models.User, error) {
+	result, err := s.collection.InsertOne(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	// Convert the insertedID to a primitive.ObjectID
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, err
+	}
+	user.ID = oid // Set the ID of the user to the oid
+	return user, nil
+}
+
+// NewMongoUserStore Constructor for MongoUserStore
 func NewMongoUserStore(client *mongo.Client) *MongoUserStore {
 
 	return &MongoUserStore{
 		client:     client,
 		collection: client.Database(DBNAME).Collection(UserCollection),
 	}
+}
+
+func (s *MongoUserStore) GetUsers(ctx context.Context) ([]*models.User, error) {
+	var users []*models.User
+	cursor, err := s.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	if err := cursor.All(ctx, &users); err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 // Implementation of GetUserById
