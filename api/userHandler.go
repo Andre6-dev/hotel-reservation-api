@@ -18,10 +18,17 @@ func NewUserHandler(userStore db.UserStore) *UserHandler {
 }
 
 func (h *UserHandler) HandlePostUser(c *fiber.Ctx) error {
+	// Validate the request body
 	var params models.CreateUserParams
 	if err := c.BodyParser(&params); err != nil {
 		return err
 	}
+
+	// Validate the params
+	if errors := params.Validate(); len(errors) > 0 {
+		return c.JSON(errors)
+	}
+
 	user, err := models.NewUserFromParams(params)
 	if err != nil {
 		return err
