@@ -41,6 +41,8 @@ func main() {
 	apiv1.Post("/user", userHandler.HandlePostUser)
 	apiv1.Get("/user", userHandler.HandlerListUsers)
 	apiv1.Get("/user/:id", userHandler.HandlerGetUser)
+	apiv1.Delete("/user/:id", userHandler.HandlerDeleteUser)
+	apiv1.Put("/user/:id", userHandler.HandlerPutUser)
 	// Start server on port 3000
 	app.Listen(*listenAddress)
 }

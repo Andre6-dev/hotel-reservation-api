@@ -15,6 +15,8 @@ type UserStore interface {
 	GetUserById(context.Context, string) (*models.User, error)
 	GetUsers(context.Context) ([]*models.User, error)
 	InsertUser(context.Context, *models.User) (*models.User, error)
+	DeleteUser(context.Context, string) error
+	UpdateUser(ctx context.Context, filter bson.M, params models.UpdateUserParams) error
 }
 
 // MongoUserStore implements UserStore
@@ -70,4 +72,29 @@ func (s *MongoUserStore) GetUserById(ctx context.Context, id string) (*models.Us
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (s *MongoUserStore) UpdateUser(ctx context.Context, filter bson.M, params models.UpdateUserParams) error {
+	update := bson.D{
+		{
+			"$set", params.ToBSON(),
+		},
+	}
+	// Validate the correctness of the ObjectID
+	_, err := s.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Implementation of DeleteUser
+func (s *MongoUserStore) DeleteUser(ctx context.Context, id string) error {
+	// Validate the correctness of the ObjectID
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	_, err = s.collection.DeleteOne(ctx, bson.M{"_id": oid})
+	return err
 }
